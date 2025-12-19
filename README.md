@@ -47,4 +47,6 @@
     - Train/Val split:
     - Play around with hyperparameters
     - Remember to monitor loss, and stop training when loss stops decreasing
-    
+    - Loss functions:
+        - R^2
+        - RMSE
