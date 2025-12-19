@@ -1,2 +1,5 @@
 # Raw data file
 Data/Raw/BindingDB_All.tsv
+
+# macOS system files
+.DS_Store
