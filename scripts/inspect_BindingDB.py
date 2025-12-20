@@ -34,3 +34,11 @@ df = pd.concat(processed_chunks, ignore_index=True)
 df = df.drop_duplicates(subset=['Ligand SMILES', 'BindingDB Target Chain Sequence'])
 
 df.to_csv('data/processed/bindingdb_clean.csv', index=False)
+
+
+#Outcome: Cleaned dataframe only keeping entries with the following criteria:
+#   - Valid Kd value
+#   - Valid Ligand SMILES value
+#   - Valid BindingDB Target Chain Sequence
+#   - Only homosapien interactions
+#   - Columns: 'Kd_M', 'pKd', 'Ligand SMILES', 'BindingDB Target Chain Sequence', 'Target Source Organism...'
