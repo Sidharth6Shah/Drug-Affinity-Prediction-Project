@@ -3,3 +3,6 @@ Data/Raw/BindingDB_All.tsv
 
 # macOS system files
 .DS_Store
+
+# Roadmap for the project
+Roadmap.txt
