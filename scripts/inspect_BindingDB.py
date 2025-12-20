@@ -13,11 +13,12 @@ for chunk in pd.read_csv('data/raw/BindingDB_All.tsv', sep='\t', chunksize=10000
     #Keep entries with Kd value, and convert the Kd value to molar
     #Kd will the the binding affinity metic we will be using
     chunk = chunk[chunk['Kd (nM)'].notna()]
-    chunk['Kd_M'] = chunk['Kd (nM)'] * 1e-9
+    chunk['Kd_M'] = pd.to_numeric(chunk['Kd (nM)'], errors='coerce') * 1e-9
+#    chunk['Kd_M'] = chunk['Kd (nM)'] * 1e-9
 
     #Remove incoomplete entries
     chunk = chunk[chunk['Ligand SMILES'].notna()]
-    chunk = chunk[chunk['BindingDB Target Chain Sequence'].notna()]
+    chunk = chunk[chunk['BindingDB Target Chain Sequence 1'].notna()]
 
     #Filter for human entries
     chunk = chunk[chunk['Target Source Organism According to Curator or DataSource'].str.contains('Homo sapiens', na=False)]
@@ -31,14 +32,17 @@ for chunk in pd.read_csv('data/raw/BindingDB_All.tsv', sep='\t', chunksize=10000
 df = pd.concat(processed_chunks, ignore_index=True)
 
 #Removal of duplicates
-df = df.drop_duplicates(subset=['Ligand SMILES', 'BindingDB Target Chain Sequence'])
+df = df.drop_duplicates(subset=['Ligand SMILES', 'BindingDB Target Chain Sequence 1'])
 
 df.to_csv('data/processed/bindingdb_clean.csv', index=False)
-
 
 #Outcome: Cleaned dataframe only keeping entries with the following criteria:
 #   - Valid Kd value
 #   - Valid Ligand SMILES value
 #   - Valid BindingDB Target Chain Sequence
 #   - Only homosapien interactions
-#   - Columns: 'Kd_M', 'pKd', 'Ligand SMILES', 'BindingDB Target Chain Sequence', 'Target Source Organism...'
+#   - Columns: 'Kd_M',
+#               'pKd', 
+#               'Ligand SMILES', 
+#               'BindingDB Target Chain Sequence 1', 
+#               'Target Source Organism...'
