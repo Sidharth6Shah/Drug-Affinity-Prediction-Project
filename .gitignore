@@ -1,7 +1,9 @@
 # Data files
 data/raw/
 data/processed/*.csv
-data/splits/
+data/splits/test.csv
+data/splits/train.csv
+data/splits/val.csv
 
 # macOS system files
 .DS_Store
