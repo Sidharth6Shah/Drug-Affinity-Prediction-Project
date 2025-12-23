@@ -1,6 +1,9 @@
-# Raw data file
+# Data files
 data/raw/BindingDB_All.tsv
 data/processed/bindingdb_clean.csv
+data/processed/test.csv
+data/processed/train.csv
+data/processed/val.csv
 
 # macOS system files
 .DS_Store
