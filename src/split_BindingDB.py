@@ -52,6 +52,6 @@ test_set = set(test_proteins)
 #train_test_overlap = train_set & test_set
 #val_test_overlap = val_set & test_set
 
-train_df.to_csv('data/processed/train.csv', index=False)
-val_df.to_csv('data/processed/val.csv', index=False)
-test_df.to_csv('data/processed/test.csv', index=False)
+train_df.to_csv('data/splits/train.csv', index=False)
+val_df.to_csv('data/splits/val.csv', index=False)
+test_df.to_csv('data/splits/test.csv', index=False)
