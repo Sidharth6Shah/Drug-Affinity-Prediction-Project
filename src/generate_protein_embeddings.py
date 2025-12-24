@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-train_df = pd.read_csv('data/splits/train.csv')
+train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
 
 #Some proteins can be associated with multiple different ligands, so this cuts down on extra embedding generation for repeated proteins
 unique_proteins = train_df['BindingDB Target Chain Sequence 1'].unique()
