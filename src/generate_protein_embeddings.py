@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from transformers import AutoTokenizer, AutoModel
+import torch
 
 train_df = pd.read_csv('data/splits/train.csv')
 
@@ -7,9 +9,6 @@ train_df = pd.read_csv('data/splits/train.csv')
 unique_proteins = train_df['BindingDB Target Chain Sequence 1'].unique()
 
 
-
-from transformers import AutoTokenizer, AutoModel
-import torch
 
 #Medium, heavier weight model alternative: "facebook/esm2_t30_150M_UR50D"
 modelVariation = "facebook/esm2_t12_35M_UR50D"
@@ -32,7 +31,6 @@ def getProteinEmbedding(sequence, model, tokenizer, device):
     embedding = hidden_states.mean(dim=1)
     embedding = embedding.cpu().numpy().squeeze()
     return embedding
-
 
 
 from pathlib import Path
