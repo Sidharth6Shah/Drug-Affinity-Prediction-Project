@@ -5,6 +5,9 @@ data/splits/test.csv
 data/splits/train.csv
 data/splits/val.csv
 
+#Embeddings
+embeddings/proteins/protein_embeddings.pkl
+
 # macOS system files
 .DS_Store
 

@@ -39,7 +39,7 @@ from pathlib import Path
 from tqdm import tqdm
 import pickle
 
-embeddingsDir = Path("embeddings")
+embeddingsDir = Path("embeddings/proteins")
 embeddingsDir.mkdir(parents=True, exist_ok=True)
 proteinEmbeddings = {}
 
