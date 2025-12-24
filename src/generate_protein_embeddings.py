@@ -20,3 +20,32 @@ model = AutoModel.from_pretrained(modelVariation)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = model.to(device)
 model.eval()
+
+def getProteinEmbedding(sequence, model, tokenizer, device):
+    inputs = tokenizer(sequence, return_tensors="pt", truncation=True, max_length=1024) #Truncation needed (protein_max_length_check.py)
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    with torch.no_grad():
+        outputs = model(**inputs)
+    
+    hidden_states = outputs.last_hidden_state
+    embedding = hidden_states.mean(dim=1)
+    embedding = embedding.cpu().numpy().squeeze()
+    return embedding
+
+
+
+from pathlib import Path
+from tqdm import tqdm
+import pickle
+
+embeddingsDir = Path("embeddings")
+embeddingsDir.mkdir(parents=True, exist_ok=True)
+proteinEmbeddings = {}
+
+for sequence in tqdm(unique_proteins, desc="Generating protein embeddings"):
+    embedding = getProteinEmbedding(sequence, model, tokenizer, device)
+    proteinEmbeddings[sequence] = embedding
+
+with open(embeddingsDir / "protein_embeddings.pkl", "wb") as f:
+    pickle.dump(proteinEmbeddings, f)
