@@ -6,6 +6,13 @@
 # Step 1: Load data and get unique ligands
 #   Load training data and extract unique SMILES strings
 
+import pandas as pd
+import numpy as np
+
+train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
+uniqueSmiles = train_df['Ligand SMILES'].unique()
+#Same as protein embedding generation, some ligads appear multiple times so the extra computation is not needed
+
 # Step 2: Parse SMILES with RDKit
 #   Parse SMILES using RDKit
 
