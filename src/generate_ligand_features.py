@@ -16,6 +16,12 @@ uniqueSmiles = train_df['Ligand SMILES'].unique()
 # Step 2: Parse SMILES with RDKit
 #   Parse SMILES using RDKit
 
+from rdkit import Chem
+
+def parseSMILES(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    return mol
+
 # Step 3: Generate Morgan fingerprints
 #   Generate Morgan (ECFP) fingerprints for each ligand
 
