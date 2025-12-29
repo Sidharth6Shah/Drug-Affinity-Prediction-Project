@@ -21,7 +21,7 @@
 - Molecule Representation:
     - RDKit
 - Model:
-    - XGBoost, Multilayer Perceptron
+    - XGBoost for baseline
 
 
 **How it Works:**
@@ -35,7 +35,7 @@
     - Mean pooling is used to normalize each protein's embedding to a uniform length.
     - Cache results
 3. Ligand Featurization w/ RDKit:
-    - Convert each ligand (in SMILe format) into a fingerprint (extremely long vector capturing chemical patterns and other details of the ligand).
+    - Convert each ligand (in SMILES format) into a fingerprint (extremely long vector capturing chemical patterns and other details of the ligand).
 4. Feature Combination:
     - Numerical representation of the interaction between each protein and it's respective ligand from the dataset.
     - Concatenate ligand fingerprint at the end of protein embedding. **POSSIBLE AREA FOR IMPROVEMENT
