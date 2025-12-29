@@ -24,3 +24,11 @@ model = XGBRegressor(
 
 #Train
 model.fit(X_train, Y_train)
+
+
+#Validation
+Y_val_pred = model.predict(X_val)
+val_mse = mean_squared_error(Y_val, Y_val_pred)
+val_r2 = r2_score(Y_val, Y_val_pred)
+
+print(f'Validation MSE: {val_mse:.4f}, R2: {val_r2:.4f}')
