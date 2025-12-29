@@ -31,4 +31,4 @@ Y_val_pred = model.predict(X_val)
 val_rmse = np.sqrt(mean_squared_error(Y_val, Y_val_pred))
 val_r2 = r2_score(Y_val, Y_val_pred)
 
-print(f'Validation MSE: {val_rmse:.4f}, R2: {val_r2:.4f}')
+print(f'Validation RMSE: {val_rmse:.4f}, R2: {val_r2:.4f}')
