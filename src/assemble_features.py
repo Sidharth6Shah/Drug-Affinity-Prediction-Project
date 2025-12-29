@@ -47,6 +47,8 @@ X_train, Y_train = assembleFeatures(train_df, proteinEmbeddings, ligandFingerpri
 X_val, Y_val = assembleFeatures(val_df, proteinEmbeddings, ligandFingerprints)
 X_test, Y_test = assembleFeatures(test_df, proteinEmbeddings, ligandFingerprints)
 
+from pathlib import Path
+Path('data/final').mkdir(parents=True, exist_ok=True)
 np.save('data/final/X_train.npy', X_train)
 np.save('data/final/Y_train.npy', Y_train)
 np.save('data/final/X_val.npy', X_val)
