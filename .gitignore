@@ -4,6 +4,7 @@ data/processed/*.csv
 data/splits/test.csv
 data/splits/train.csv
 data/splits/val.csv
+data/final/*.npy
 
 #Embeddings
 embeddings/proteins/protein_embeddings.pkl

@@ -41,3 +41,15 @@ def assembleFeatures(df, proteinEmbeddings, ligandFingerprints):
     Y = np.array(labels)
 
     return X, Y
+
+#Create X and Y for each split
+X_train, Y_train = assembleFeatures(train_df, proteinEmbeddings, ligandFingerprints)
+X_val, Y_val = assembleFeatures(val_df, proteinEmbeddings, ligandFingerprints)
+X_test, Y_test = assembleFeatures(test_df, proteinEmbeddings, ligandFingerprints)
+
+np.save('data/final/X_train.npy', X_train)
+np.save('data/final/Y_train.npy', Y_train)
+np.save('data/final/X_val.npy', X_val)
+np.save('data/final/Y_val.npy', Y_val)
+np.save('data/final/X_test.npy', X_test)
+np.save('data/final/Y_test.npy', Y_test)
