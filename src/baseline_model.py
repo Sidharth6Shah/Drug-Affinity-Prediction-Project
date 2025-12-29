@@ -12,7 +12,7 @@ Y_val = np.load('data/final/Y_val.npy')
 X_test = np.load('data/final/X_test.npy')
 Y_test = np.load('data/final/Y_test.npy')
 
-#Set up the model
+#Model setup
 model = XGBRegressor(
     n_estimators=100,
     max_depth=6,
@@ -28,7 +28,7 @@ model.fit(X_train, Y_train)
 
 #Validation
 Y_val_pred = model.predict(X_val)
-val_mse = mean_squared_error(Y_val, Y_val_pred)
+val_rmse = np.sqrt(mean_squared_error(Y_val, Y_val_pred))
 val_r2 = r2_score(Y_val, Y_val_pred)
 
-print(f'Validation MSE: {val_mse:.4f}, R2: {val_r2:.4f}')
+print(f'Validation MSE: {val_rmse:.4f}, R2: {val_r2:.4f}')
