@@ -7,6 +7,7 @@ data/splits/val.csv
 
 #Embeddings
 embeddings/proteins/protein_embeddings.pkl
+embeddings/ligands/ligand_fingerprints.pkl
 
 # macOS system files
 .DS_Store
