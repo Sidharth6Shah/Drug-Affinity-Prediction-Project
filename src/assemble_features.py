@@ -33,9 +33,11 @@ def assembleFeatures(df, proteinEmbeddings, ligandFingerprints):
 
         #Concatenate
         if proteinEmbedding is not None and ligandFingerprint is not None:
-            combinedFeature = np.concatenate((proteinEmbedding, ligandFingerprint))
-            features.append(combinedFeature)
-            labels.append(label)
+            #Skip samples with invalid labels (NaN or Inf)
+            if pd.notna(label) and not np.isinf(label):
+                combinedFeature = np.concatenate((proteinEmbedding, ligandFingerprint))
+                features.append(combinedFeature)
+                labels.append(label)
 
     X = np.array(features)
     Y = np.array(labels)

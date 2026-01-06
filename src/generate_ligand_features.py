@@ -6,9 +6,18 @@
 import pandas as pd
 import numpy as np
 
+#Load all splits to get ALL unique ligands across train/val/test
 train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
-uniqueSmiles = train_df['Ligand SMILES'].unique()
-#Same as protein embedding generation, some ligads appear multiple times so the extra computation is not needed
+val_df = pd.read_csv('data/splits/val.csv', low_memory=False)
+test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
+
+#Combine all unique SMILES from all splits
+all_smiles = pd.concat([
+    train_df['Ligand SMILES'],
+    val_df['Ligand SMILES'],
+    test_df['Ligand SMILES']
+])
+uniqueSmiles = all_smiles.unique()
 
 
 # Step 2: Generate Morgan (ECFP) fingerprints

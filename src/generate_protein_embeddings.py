@@ -1,10 +1,18 @@
 import pandas as pd
 import numpy as np
 
+#Load all splits to get ALL unique proteins across train/val/test
 train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
+val_df = pd.read_csv('data/splits/val.csv', low_memory=False)
+test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
 
-#Some proteins can be associated with multiple different ligands, so this cuts down on extra embedding generation for repeated proteins
-unique_proteins = train_df['BindingDB Target Chain Sequence 1'].unique()
+#Combine all unique proteins from all splits
+all_proteins = pd.concat([
+    train_df['BindingDB Target Chain Sequence 1'],
+    val_df['BindingDB Target Chain Sequence 1'],
+    test_df['BindingDB Target Chain Sequence 1']
+])
+unique_proteins = all_proteins.unique()
 
 
 from transformers import AutoTokenizer, AutoModel
