@@ -24,7 +24,6 @@ def getAtomFeatures(atom):
     features.append(1 if atomSymbol not in atomTypes else 0)
 
     features.append(atom.GetDegree())
-
     features.append(atom.GetFormalCharge())
     
     hybridizationTypes = [
@@ -39,8 +38,23 @@ def getAtomFeatures(atom):
         features.append(1 if hyb == hybType else 0)
     
     features.append(1 if atom.GetIsAromatic() else 0)
-    
     features.append(atom.GetTotalNumHs())
-    
+
     return features
 
+
+def getBondFeatures(bond):
+    features = []
+    bondTypes = [
+        Chem.rdchem.BondType.SINGLE,
+        Chem.rdchem.BondType.DOUBLE,
+        Chem.rdchem.BondType.TRIPLE,
+        Chem.rdchem.BondType.AROMATIC
+    ]
+    for bondType in bondTypes:
+        features.append(1 if bond.GetBondType() == bondType else 0)
+
+    features.append(1 if bond.GetIsConjugated() else 0)
+    features.append(1 if bond.IsInRing() else 0)
+    
+    return features
