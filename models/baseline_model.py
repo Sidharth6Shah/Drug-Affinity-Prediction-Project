@@ -45,8 +45,7 @@ results = {
         'max_depth': 6,
         'learning_rate': 0.1,
         'random_state': 42,
-        'n_jobs': -1,
-        'verbosity': 1
+        'n_jobs': -1
     },
     'validation_metrics': {
         'rmse': float(val_rmse),
