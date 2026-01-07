@@ -9,6 +9,7 @@ data/final/*.npy
 #Embeddings
 embeddings/proteins/protein_embeddings.pkl
 embeddings/ligands/ligand_fingerprints.pkl
+embeddings/ligands/ligand_graphs.pkl
 
 # macOS system files
 .DS_Store

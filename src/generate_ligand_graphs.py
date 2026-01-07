@@ -58,3 +58,45 @@ def getBondFeatures(bond):
     features.append(1 if bond.IsInRing() else 0)
     
     return features
+
+
+def smilesToGraph(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    
+    nodeFeatures = []
+    for atom in mol.GetAtoms():
+        nodeFeatures.append(getAtomFeatures(atom))
+    edgeIndices = []
+    edgeFeatures = []
+
+    for bond in mol.GetBonds():
+        i = bond.GetBeginAtomIdx()
+        j = bond.GetEndAtomIdx()
+        edgeIndices.append((i, j))
+        edgeIndices.append((j, i))
+        bondFeatures = getBondFeatures(bond)
+        edgeFeatures.append(bondFeatures)
+        edgeFeatures.append(bondFeatures)
+
+    return {
+        'nodeFeatures': nodeFeatures,
+        'edgeIndex': edgeIndices,
+        'edgeFeatures': edgeFeatures,
+        'numNodes': len(nodeFeatures),
+    }
+
+from tqdm import tqdm
+import pickle
+from pathlib import Path
+
+ligandGraphs = {}
+
+for smiles in tqdm(uniqueSMILES):
+    graph = smilesToGraph(smiles)
+    if graph is not None:
+        ligandGraphs[smiles] = graph
+Path('embeddings/ligands/').mkdir(parents=True, exist_ok=True)
+with open('embeddings/ligands/ligand_graphs.pkl', 'wb') as f:
+    pickle.dump(ligandGraphs, f)
