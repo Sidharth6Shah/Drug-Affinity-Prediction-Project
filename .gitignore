@@ -16,3 +16,6 @@ embeddings/ligands/ligand_graphs.pkl
 
 # Roadmap for the project
 Roadmap.txt
+
+# Claude Code documentation
+CLAUDE.md
