@@ -1,0 +1,49 @@
+GNN MODEL ARCHITECTURE FOR BINDING AFFINITY PREDICTION
+========================================================
+
+BASIC IDEA
+----------
+You have two inputs:
+1. Ligand graph - describes the drug molecule's structure
+2. Protein embedding - describes the protein's characteristics
+
+You need to combine them to predict one number (the binding affinity).
+
+
+THE STEPS
+---------
+
+1. Process the ligand through the GNN
+   - Input: Variable-sized graph with atom features
+   - The GNN layers learn patterns in the molecular structure
+   - Output: Fixed-size vector (e.g., 128 dimensions) representing the ligand
+
+2. Concatenate ligand + protein
+   - GNN output: 128-dim ligand embedding
+   - Protein embedding: 480-dim protein features
+   - Combined: 608-dim vector containing both ligand and protein info
+
+3. Pass through a regular neural network (MLP)
+   - Input: 608-dim combined features
+   - Hidden layers learn how ligand and protein interact
+   - Output: 1 number (predicted binding affinity)
+
+
+VISUAL FLOW
+-----------
+
+Ligand Graph (variable size)
+    ↓
+  GNN (3 layers)
+    ↓
+128-dim ligand embedding  →  CONCAT  →  MLP  →  Binding Affinity
+                                ↑              (1 number)
+                                |
+                    480-dim protein embedding
+
+
+WHY IT WORKS
+------------
+- The GNN understands the drug molecule's chemistry
+- The protein embedding captures protein characteristics
+- The MLP learns which drug-protein combinations bind strongly
