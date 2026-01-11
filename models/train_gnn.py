@@ -8,7 +8,6 @@ import pickle
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm
 import json
-# from datetime import datetime
 
 from gnn import BindingAffinityGNN
 
