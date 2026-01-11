@@ -157,7 +157,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
     
     # Training loop
-    numEpochs = 1 ##CHANGE TO 50#######################################################################################################################################################################
+    numEpochs = 50 ##CHANGE TO 50#######################################################################################################################################################################
     bestValRmse = float('inf')
     patience = 10
     patienceCounter = 0
