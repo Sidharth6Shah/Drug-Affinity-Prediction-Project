@@ -48,8 +48,8 @@ class GNNEncoder(nn.Module):
         self.numLayers = numLayers
         self.convLayers = nn.ModuleList()
         self.convLayers.append(GraphConvolutionLayer(nodeFeaturesDimension, hiddenDimension))
-        for layer in range(numLayers - 2):
-            self.convLayers.append(GraphConvolutionLayer(hiddenDimension, hiddenDimension))
+        self.convLayers.append(GraphConvolutionLayer(hiddenDimension, hiddenDimension))
+        self.convLayers.append(GraphConvolutionLayer(hiddenDimension, hiddenDimension))
         self.convLayers.append(GraphConvolutionLayer(hiddenDimension, outputDimension))
         self.layerNorms = nn.ModuleList([
             nn.LayerNorm(hiddenDimension if i < numLayers-1 else outputDimension)
