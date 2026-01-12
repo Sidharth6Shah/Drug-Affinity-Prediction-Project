@@ -1,4 +1,4 @@
-#Training script for GANN-based binding affinity prediction
+#training script for GANN-based binding affinity prediction
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
