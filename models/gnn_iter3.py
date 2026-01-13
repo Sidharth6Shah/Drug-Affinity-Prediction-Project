@@ -1,13 +1,9 @@
-#gnn attempt 2 (graph attention neural network)
-# Improvements: 
-# - extra layer on gnn
-# - attention pooling (instead of mean pooling)
-# - layer normalization (instead of batch normalization)
-# - residual connections
-# - 2 extra layers in mlp
-# - layer normalization
+#gnn attempt 3 (simplified architecture)
+# Improvements from gann:
+# - bring the mlp to 3 layers
+# - Increase dropout to 0.4 const
+# - switch back to mean pooling
 
-#Converting ligand graphs to 128-dimension vectors
 
 import torch
 import torch.nn as nn
@@ -29,17 +25,17 @@ class GraphConvolutionLayer(nn.Module):
             aggregated[dst] += transformed[src] + edgeMessage
         return F.relu(aggregated)
     
-class AttentionPooling(nn.Module):
+# class AttentionPooling(nn.Module):
 
-    def __init__(self, inputDimension):
-        super(AttentionPooling, self).__init__()
-        self.attentionWeight = nn.Linear(inputDimension, 1)
+#     def __init__(self, inputDimension):
+#         super(AttentionPooling, self).__init__()
+#         self.attentionWeight = nn.Linear(inputDimension, 1)
     
-    def forward(self, nodeFeatures):
-        attentionScores = self.attentionWeight(nodeFeatures)
-        attentionWeights = F.softmax(attentionScores, dim=0)
-        graphEmbedding = torch.sum(nodeFeatures * attentionWeights, dim = 0)
-        return graphEmbedding
+#     def forward(self, nodeFeatures):
+#         attentionScores = self.attentionWeight(nodeFeatures)
+#         attentionWeights = F.softmax(attentionScores, dim=0)
+#         graphEmbedding = torch.sum(nodeFeatures * attentionWeights, dim = 0)
+#         return graphEmbedding
 
 class GNNEncoder(nn.Module):
 
@@ -55,7 +51,7 @@ class GNNEncoder(nn.Module):
             nn.LayerNorm(hiddenDimension if i < numLayers-1 else outputDimension)
             for i in range(numLayers)
         ])
-        self.attentionPooling = AttentionPooling(outputDimension)
+        # self.attentionPooling = AttentionPooling(outputDimension)
 
     def forward(self, nodeFeatures, edgeIndex, edgeFeatures):
         x = nodeFeatures
@@ -67,12 +63,13 @@ class GNNEncoder(nn.Module):
                 x = x + residual
             if i < self.numLayers - 1:
                 x = F.dropout(x, p=0.2, training=self.training)
-        graphEmbedding = self.attentionPooling(x)
+        # graphEmbedding = self.attentionPooling(x)
+        graphEmbedding = torch.mean(x, dim=0)
         return graphEmbedding
     
 class BindingAffinityGNN(nn.Module):
 
-    def __init__(self, proteinDimension=480, ligandGnnOutput=128, hiddenDimension=512):
+    def __init__(self, proteinDimension=480, ligandGnnOutput=128, hiddenDimension=256):
         super(BindingAffinityGNN, self).__init__()
         self.ligandEncoder = GNNEncoder(
             nodeFeaturesDimension=19,
@@ -81,28 +78,41 @@ class BindingAffinityGNN(nn.Module):
             numLayers=4
         )
         combinedDimension = proteinDimension + ligandGnnOutput
+        # self.mlp = nn.Sequential(
+        #     nn.Linear(combinedDimension, hiddenDimension),
+        #     nn.LayerNorm(hiddenDimension),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.3),
+
+        #     nn.Linear(hiddenDimension, hiddenDimension // 2),
+        #     nn.LayerNorm(hiddenDimension // 2),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.3),
+
+        #     nn.Linear(hiddenDimension // 2, hiddenDimension // 4),
+        #     nn.LayerNorm(hiddenDimension // 4),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.2),
+
+        #     nn.Linear(hiddenDimension // 4, hiddenDimension // 8),
+        #     nn.LayerNorm(hiddenDimension // 8),
+        #     nn.ReLU(),
+        #     nn.Dropout(0.2),
+
+        #     nn.Linear(hiddenDimension // 8, 1)
+        # )
         self.mlp = nn.Sequential(
-            nn.Linear(combinedDimension, hiddenDimension),
-            nn.LayerNorm(hiddenDimension),
+            nn.Linear(combinedDimension, 256),
+            nn.LayerNorm(256),
             nn.ReLU(),
-            nn.Dropout(0.3),
-
-            nn.Linear(hiddenDimension, hiddenDimension // 2),
-            nn.LayerNorm(hiddenDimension // 2),
+            nn.Dropout(0.4),
+            
+            nn.Linear(256, 128),
+            nn.LayerNorm(128),
             nn.ReLU(),
-            nn.Dropout(0.3),
-
-            nn.Linear(hiddenDimension // 2, hiddenDimension // 4),
-            nn.LayerNorm(hiddenDimension // 4),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(hiddenDimension // 4, hiddenDimension // 8),
-            nn.LayerNorm(hiddenDimension // 8),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(hiddenDimension // 8, 1)
+            nn.Dropout(0.4),
+            
+            nn.Linear(128, 1)
         )
     
     def forward(self, proteinEmbedding, nodeFeatures, edgeIndex, edgeFeatures):
