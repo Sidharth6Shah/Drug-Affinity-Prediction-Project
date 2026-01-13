@@ -135,7 +135,7 @@ def main():
     testDataset = ProteinLigandDataset('data/splits/test.csv', proteinEmbeddings, ligandGraphs)
     
     # Create dataloaders
-    batchSize = 32
+    batchSize = 128
     trainLoader = DataLoader(trainDataset, batch_size=batchSize, shuffle=True, collate_fn=ProteinLigandDataset.collate)
     valLoader = DataLoader(valDataset, batch_size=batchSize, shuffle=False, collate_fn=ProteinLigandDataset.collate)
     testLoader = DataLoader(testDataset, batch_size=batchSize, shuffle=False, collate_fn=ProteinLigandDataset.collate)
@@ -153,7 +153,7 @@ def main():
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
     
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0006, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
     
     # Training loop

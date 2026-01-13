@@ -38,6 +38,7 @@ import pickle
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm
 import importlib
+from datetime import datetime
 
 # Add models directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'models'))
@@ -171,13 +172,32 @@ def main():
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}\n")
 
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0008) #Original is 0.001
+    learningRate = 0.0007 #0.0008
+    optimizer = torch.optim.Adam(model.parameters(), lr=learningRate)
+
+    # Setup logging
+    log_dir = 'results'
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, 'quick_test_results.txt')
+
+    # Write header to log file
+    with open(log_file, 'a') as f:
+        f.write("\n" + "="*80 + "\n")
+        f.write(f"Test Run: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write("="*80 + "\n")
+        f.write(f"Model: {args.model}\n")
+        f.write(f"Batch Size: {batchSize}\n")
+        f.write(f"Learning Rate: {learningRate}\n")
+        f.write(f"Train Samples: {len(trainDataset)}\n")
+        f.write(f"Val Samples: {len(valDataset)}\n")
+        f.write(f"Device: {device}\n")
+        f.write("-"*80 + "\n")
 
     print("="*70)
     print("Training started...")
     print("="*70)
     print(f"Batch size: {batchSize}")
-    print(f"Learning rate: {0.0008}")
+    print(f"Learning rate: {learningRate}")
 
     for epoch in range(args.epochs):
         trainLoss = trainEpoch(model, trainLoader, optimizer, criterion, device)
@@ -191,18 +211,38 @@ def main():
         else:
             status = "✗ Poor performance"
 
+        # Print to console
         print(f"Epoch {epoch+1}/{args.epochs}: Train Loss={trainLoss:.4f} | Val R²={valR2:.4f} | Val RMSE={valRmse:.4f} | {status}")
+
+        # Log to file
+        with open(log_file, 'a') as f:
+            f.write(f"Epoch {epoch+1}/{args.epochs}:\n")
+            f.write(f"  Train Loss: {trainLoss:.4f}\n")
+            f.write(f"  Val Loss: {valLoss:.4f}\n")
+            f.write(f"  Val RMSE: {valRmse:.4f}\n")
+            f.write(f"  Val R²: {valR2:.4f}\n")
+            f.write(f"  Status: {status}\n")
+
+    # Final summary
+    interpretation = ""
+    if valR2 > 0.05:
+        interpretation = "✓ Good: Positive R² suggests this architecture is promising"
+    elif valR2 > -0.05:
+        interpretation = "⚠ Marginal: Close to positive, may improve with full training"
+    else:
+        interpretation = "✗ Poor: Negative R² suggests architecture needs more tuning"
 
     print("="*70)
     print("\nQuick test complete!")
     print("\nInterpretation:")
-    if valR2 > 0.05:
-        print("✓ Good: Positive R² suggests this architecture is promising")
-    elif valR2 > -0.05:
-        print("⚠ Marginal: Close to positive, may improve with full training")
-    else:
-        print("✗ Poor: Negative R² suggests architecture needs more tuning")
+    print(interpretation)
     print("="*70 + "\n")
+
+    # Write final summary to log
+    with open(log_file, 'a') as f:
+        f.write("-"*80 + "\n")
+        f.write(f"Final Result: {interpretation}\n")
+        f.write("="*80 + "\n\n")
 
 if __name__ == '__main__':
     main()
