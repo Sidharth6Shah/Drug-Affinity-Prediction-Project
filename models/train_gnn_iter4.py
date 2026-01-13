@@ -1,34 +1,4 @@
-#!/usr/bin/env python3
-"""
-Quick Test Script for GNN Model Iterations
-
-Purpose: Rapidly test different GNN architectures on a small subset of data
-         to evaluate if hyperparameter changes are effective before full training.
-
-         gnn_iter3: 4 layer gnn + 3 layer mlp, 0.4 dropout
-         gnn_iter4: 3 layer gnn + 3 layer mlp, 0.5 dropout
-
-Usage:
-    # Test gnn_iter3 (default: 1000 samples, 5 epochs)
-    python scripts/quick_test.py --model gnn_iter3
-
-    # Test gnn_iter4
-    python scripts/quick_test.py --model gnn_iter4
-
-    # Custom settings: 2000 samples, 3 epochs
-    python scripts/quick_test.py --model gnn_iter4 --samples 2000 --epochs 3
-
-What to look for:
-    - Epoch 1 Val R² > -0.05: Good sign (better than GANN's -0.068)
-    - Val R² improving each epoch: Model is learning
-    - Val R² < -0.1 after epoch 3: Hyperparams likely not helping
-
-Expected runtime: 5-10 minutes on CPU
-"""
-
-import argparse
-import sys
-import os
+#training script for gnn_iter4
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
@@ -37,10 +7,9 @@ import pandas as pd
 import pickle
 from sklearn.metrics import mean_squared_error, r2_score
 from tqdm import tqdm
-import importlib
+import json
 
-# Add models directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'models'))
+from gnn_iter4 import BindingAffinityGNN
 
 class ProteinLigandDataset(Dataset):
     def __init__(self, splitCsv, proteinEmbeddings, ligandGraphs):
@@ -55,10 +24,11 @@ class ProteinLigandDataset(Dataset):
                 if pd.notna(row['pKd']) and not np.isinf(row['pKd']):
                     validIndices.append(index)
         self.df = self.df.loc[validIndices].reset_index(drop=True)
+        print(f"Loaded {len(self.df)} valid samples from {splitCsv}")
 
     def __len__(self):
         return len(self.df)
-
+    
     def __getitem__(self, index):
         row = self.df.iloc[index]
         proteinSequence = row['BindingDB Target Chain Sequence 1']
@@ -73,136 +43,185 @@ class ProteinLigandDataset(Dataset):
             'edgeFeatures': torch.FloatTensor(graph['edgeFeatures']),
             'label': torch.FloatTensor([label])
         }
-
+    
     def collate(batch):
         return batch
+
 
 def trainEpoch(model, dataloader, optimizer, criterion, device):
     model.train()
     totalLoss = 0
-    for batch in tqdm(dataloader, desc="Training", leave=False):
+    for batch in tqdm(dataloader, desc="training"):
         batchLoss = 0
+
+        #process each sample in batch
         for sample in batch:
             proteinEmbedding = sample['proteinEmbedding'].to(device)
             nodeFeatures = sample['nodeFeatures'].to(device)
             edgeFeatures = sample['edgeFeatures'].to(device)
             edgeIndex = sample['edgeIndex']
             label = sample['label'].to(device)
+
+            #no gradient
             optimizer.zero_grad()
+
+            #forward pass
             prediction = model(proteinEmbedding, nodeFeatures, edgeIndex, edgeFeatures)
+            
+            #find loss
             loss = criterion(prediction, label)
             batchLoss += loss.item()
+
+            #backward pass
             loss.backward()
+
+            #update weights
             optimizer.step()
+        
         totalLoss += batchLoss/len(batch)
+
     return totalLoss/len(dataloader)
 
+
 def evaluate(model, dataloader, criterion, device):
-    model.eval()
+    model.eval()  # Set to evaluation mode (disables dropout)
     totalLoss = 0
     predictions = []
     labels = []
+    
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Validating", leave=False):
+        for batch in tqdm(dataloader, desc="Evaluating"):
             for sample in batch:
                 proteinEmbedding = sample['proteinEmbedding'].to(device)
                 nodeFeatures = sample['nodeFeatures'].to(device)
                 edgeFeatures = sample['edgeFeatures'].to(device)
                 edgeIndex = sample['edgeIndex']
                 label = sample['label'].to(device)
+                
+                # Forward pass
                 prediction = model(proteinEmbedding, nodeFeatures, edgeIndex, edgeFeatures)
+                # Calculate loss
                 loss = criterion(prediction, label)
                 totalLoss += loss.item()
+                # Store predictions and labels for metrics
                 predictions.append(prediction.cpu().numpy()[0])
                 labels.append(label.cpu().numpy()[0])
+    
+    # Calculations
     averageLoss = totalLoss / sum(len(batch) for batch in dataloader)
     predictions = np.array(predictions)
     labels = np.array(labels)
+    
     rmse = np.sqrt(mean_squared_error(labels, predictions))
     r2 = r2_score(labels, predictions)
-    return averageLoss, rmse, r2
+    
+    return averageLoss, rmse, r2, predictions, labels
+
+
 
 def main():
-    parser = argparse.ArgumentParser(description='Quick test GNN models on small dataset')
-    parser.add_argument('--model', type=str, required=True, help='Model name (e.g., gnn_iter3, gnn_iter4)')
-    parser.add_argument('--samples', type=int, default=1000, help='Number of training samples (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=5, help='Number of epochs (default: 5)')
-    args = parser.parse_args()
-
-    # Dynamic import
-    try:
-        model_module = importlib.import_module(args.model)
-        BindingAffinityGNN = model_module.BindingAffinityGNN
-    except ImportError:
-        print(f"Error: Could not import model '{args.model}'")
-        print(f"Make sure models/{args.model}.py exists")
-        sys.exit(1)
-
-    print("\n" + "="*70)
-    print(f"⚡ QUICK TEST MODE")
-    print(f"Model: {args.model}")
-    print(f"Samples: {args.samples} train, {args.samples//3} val")
-    print(f"Epochs: {args.epochs}")
-    print("="*70 + "\n")
-
-    # Load data
+    
     with open('embeddings/proteins/protein_embeddings.pkl', 'rb') as f:
         proteinEmbeddings = pickle.load(f)
+    
     with open('embeddings/ligands/ligand_graphs.pkl', 'rb') as f:
         ligandGraphs = pickle.load(f)
-
+    
+    print(f"Loaded {len(proteinEmbeddings)} protein embeddings")
+    print(f"Loaded {len(ligandGraphs)} ligand graphs")
+    
     trainDataset = ProteinLigandDataset('data/splits/train.csv', proteinEmbeddings, ligandGraphs)
     valDataset = ProteinLigandDataset('data/splits/val.csv', proteinEmbeddings, ligandGraphs)
-
-    # Limit samples
-    trainDataset.df = trainDataset.df.iloc[:args.samples].reset_index(drop=True)
-    valDataset.df = valDataset.df.iloc[:args.samples//3].reset_index(drop=True)
-
-    print(f"Loaded {len(trainDataset)} train samples, {len(valDataset)} val samples\n")
-
-    batchSize = 256 #Original is 32
+    testDataset = ProteinLigandDataset('data/splits/test.csv', proteinEmbeddings, ligandGraphs)
+    
+    # Create dataloaders
+    batchSize = 64
     trainLoader = DataLoader(trainDataset, batch_size=batchSize, shuffle=True, collate_fn=ProteinLigandDataset.collate)
     valLoader = DataLoader(valDataset, batch_size=batchSize, shuffle=False, collate_fn=ProteinLigandDataset.collate)
-
+    testLoader = DataLoader(testDataset, batch_size=batchSize, shuffle=False, collate_fn=ProteinLigandDataset.collate)
+    
+    # Setup model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = BindingAffinityGNN(proteinDimension=480, ligandGnnOutput=128, hiddenDimension=256).to(device)
-
-    print(f"Device: {device}")
-    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}\n")
-
+    print(f"\nUsing device: {device}")
+    
+    model = BindingAffinityGNN(
+        proteinDimension=480,
+        ligandGnnOutput=128,
+        hiddenDimension=256
+    ).to(device)
+    
+    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+    
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0008) #Original is 0.001
-
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=5e-4)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
+    
+    # Training loop
+    numEpochs = 50 ##CHANGE TO 50#######################################################################################################################################################################
+    bestValRmse = float('inf')
+    patience = 10
+    patienceCounter = 0
+    
+    print("\n" + "="*70)
+    print("Starting training...")
     print("="*70)
-    print("Training started...")
-    print("="*70)
-    print(f"Batch size: {batchSize}")
-    print(f"Learning rate: {0.0008}")
-
-    for epoch in range(args.epochs):
+    
+    for epoch in range(numEpochs):
+        print(f"\nEpoch {epoch + 1}/{numEpochs}")
+        print("-" * 70)
+        
+        # Train
         trainLoss = trainEpoch(model, trainLoader, optimizer, criterion, device)
-        valLoss, valRmse, valR2 = evaluate(model, valLoader, criterion, device)
-
-        status = ""
-        if valR2 > 0:
-            status = "✓ POSITIVE R²"
-        elif valR2 > -0.05:
-            status = "⚠ Close to positive"
+        
+        # Validate
+        valLoss, valRmse, valR2, _, _ = evaluate(model, valLoader, criterion, device)
+        
+        print(f"\nTrain Loss: {trainLoss:.4f}")
+        print(f"Val Loss: {valLoss:.4f} | Val RMSE: {valRmse:.4f} | Val R²: {valR2:.4f}")
+        
+        # Learning rate scheduling
+        scheduler.step(valLoss)
+        
+        # Early stopping
+        if valRmse < bestValRmse:
+            bestValRmse = valRmse
+            patienceCounter = 0
+            torch.save(model.state_dict(), 'results/best_gnn_iter4_model.pt')
+            print(f"✓ Saved best model (Val RMSE: {bestValRmse:.4f})")
         else:
-            status = "✗ Poor performance"
-
-        print(f"Epoch {epoch+1}/{args.epochs}: Train Loss={trainLoss:.4f} | Val R²={valR2:.4f} | Val RMSE={valRmse:.4f} | {status}")
-
+            patienceCounter += 1
+            print(f"No improvement ({patienceCounter}/{patience})")
+            if patienceCounter >= patience:
+                print(f"\nEarly stopping after {epoch + 1} epochs")
+                break
+    
+    # Load best model and evaluate on test set
+    print("\n" + "="*70)
+    print("Final test evaluation...")
     print("="*70)
-    print("\nQuick test complete!")
-    print("\nInterpretation:")
-    if valR2 > 0.05:
-        print("✓ Good: Positive R² suggests this architecture is promising")
-    elif valR2 > -0.05:
-        print("⚠ Marginal: Close to positive, may improve with full training")
-    else:
-        print("✗ Poor: Negative R² suggests architecture needs more tuning")
-    print("="*70 + "\n")
+    model.load_state_dict(torch.load('results/best_gnn_iter4_model.pt'))
+    
+    testLoss, testRmse, testR2, _, _ = evaluate(model, testLoader, criterion, device)
+    
+    print(f"\nTest RMSE: {testRmse:.4f}")
+    print(f"Test R²: {testR2:.4f}")
+    
+    # Save results
+    results = {
+        'model': 'GNN_iter4',
+        'test_metrics': {
+            'rmse': float(testRmse),
+            'r2': float(testR2)
+        }
+    }
+    
+    with open('results/gnn_iter4_results.json', 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    print("\n" + "="*70)
+    print("Training complete!")
+    print("="*70)
+
 
 if __name__ == '__main__':
     main()

@@ -1,8 +1,10 @@
-#gnn attempt 3 (simplified architecture)
-# Improvements from gann:
-# - bring the mlp to 3 layers
-# - Increase dropout to 0.4 const
-# - switch back to mean pooling
+#gnn attempt 4 (simplified architecture)
+# Improvements from gnn_iter3:
+# - Make both gnn and mlp 3 layers instead of 4
+# - dropout in the MLP increased to 0.5
+# - make the learning rate 0.0001
+# - double batch size to 64
+# - make weight decay 5e^-4
 
 
 import torch
@@ -25,33 +27,20 @@ class GraphConvolutionLayer(nn.Module):
             aggregated[dst] += transformed[src] + edgeMessage
         return F.relu(aggregated)
     
-# class AttentionPooling(nn.Module):
-
-#     def __init__(self, inputDimension):
-#         super(AttentionPooling, self).__init__()
-#         self.attentionWeight = nn.Linear(inputDimension, 1)
-    
-#     def forward(self, nodeFeatures):
-#         attentionScores = self.attentionWeight(nodeFeatures)
-#         attentionWeights = F.softmax(attentionScores, dim=0)
-#         graphEmbedding = torch.sum(nodeFeatures * attentionWeights, dim = 0)
-#         return graphEmbedding
 
 class GNNEncoder(nn.Module):
 
-    def __init__(self, nodeFeaturesDimension = 19, hiddenDimension = 128, outputDimension=128, numLayers = 4):
+    def __init__(self, nodeFeaturesDimension = 19, hiddenDimension = 128, outputDimension=128, numLayers = 3):
         super(GNNEncoder, self).__init__()
         self.numLayers = numLayers
         self.convLayers = nn.ModuleList()
         self.convLayers.append(GraphConvolutionLayer(nodeFeaturesDimension, hiddenDimension))
-        self.convLayers.append(GraphConvolutionLayer(hiddenDimension, hiddenDimension))
         self.convLayers.append(GraphConvolutionLayer(hiddenDimension, hiddenDimension))
         self.convLayers.append(GraphConvolutionLayer(hiddenDimension, outputDimension))
         self.layerNorms = nn.ModuleList([
             nn.LayerNorm(hiddenDimension if i < numLayers-1 else outputDimension)
             for i in range(numLayers)
         ])
-        # self.attentionPooling = AttentionPooling(outputDimension)
 
     def forward(self, nodeFeatures, edgeIndex, edgeFeatures):
         x = nodeFeatures
@@ -63,7 +52,6 @@ class GNNEncoder(nn.Module):
                 x = x + residual
             if i < self.numLayers - 1:
                 x = F.dropout(x, p=0.2, training=self.training)
-        # graphEmbedding = self.attentionPooling(x)
         graphEmbedding = torch.mean(x, dim=0)
         return graphEmbedding
     
@@ -75,42 +63,19 @@ class BindingAffinityGNN(nn.Module):
             nodeFeaturesDimension=19,
             hiddenDimension=128,
             outputDimension=ligandGnnOutput,
-            numLayers=4
+            numLayers=3
         )
         combinedDimension = proteinDimension + ligandGnnOutput
-        # self.mlp = nn.Sequential(
-        #     nn.Linear(combinedDimension, hiddenDimension),
-        #     nn.LayerNorm(hiddenDimension),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.3),
-
-        #     nn.Linear(hiddenDimension, hiddenDimension // 2),
-        #     nn.LayerNorm(hiddenDimension // 2),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.3),
-
-        #     nn.Linear(hiddenDimension // 2, hiddenDimension // 4),
-        #     nn.LayerNorm(hiddenDimension // 4),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.2),
-
-        #     nn.Linear(hiddenDimension // 4, hiddenDimension // 8),
-        #     nn.LayerNorm(hiddenDimension // 8),
-        #     nn.ReLU(),
-        #     nn.Dropout(0.2),
-
-        #     nn.Linear(hiddenDimension // 8, 1)
-        # )
         self.mlp = nn.Sequential(
             nn.Linear(combinedDimension, 256),
             nn.LayerNorm(256),
             nn.ReLU(),
-            nn.Dropout(0.4),
+            nn.Dropout(0.5),
             
             nn.Linear(256, 128),
             nn.LayerNorm(128),
             nn.ReLU(),
-            nn.Dropout(0.4),
+            nn.Dropout(0.5),
             
             nn.Linear(128, 1)
         )
@@ -182,11 +147,6 @@ if __name__ == '__main__':
 
 
 
-#NOTE this model returns the best results so far (besides baseline)
+#NOTE this model overfit
 # Next steps:
-# - bring the mlp and gnn to 3 layers
-# - Increase dropout to 0.5 const
-# - switch back to mean pooling
-# - make the learning rate 0.0001
-# - double batch size to 64
-# - make weight decay 5e^-4
+# - 
