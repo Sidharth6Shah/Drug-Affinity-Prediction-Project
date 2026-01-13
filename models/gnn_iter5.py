@@ -34,7 +34,7 @@ class CrossAttention(nn.Module):
 
     def forward(self, proteinEmbedding, ligandNodes):
         query = self.queryProjection(proteinEmbedding).unsqueeze(0)
-        keys = self.keyProjection(ligandNodes).unsqueeze(0)
+        keys = self.keyProjection(ligandNodes)
         values = self.valueProjection(ligandNodes)
         scores = torch.matmul(query, keys.transpose(0, 1)) / self.scale
         attentionWeights = F.softmax(scores, dim=-1)

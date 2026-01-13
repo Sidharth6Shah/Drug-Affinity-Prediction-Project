@@ -173,7 +173,7 @@ def main():
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}\n")
 
     criterion = nn.MSELoss()
-    learningRate = 0.0007 #0.0008
+    learningRate = 0.0003 #0.0008
     optimizer = torch.optim.Adam(model.parameters(), lr=learningRate)
 
     # Setup logging
