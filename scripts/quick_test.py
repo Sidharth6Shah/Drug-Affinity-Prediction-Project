@@ -7,6 +7,7 @@ Purpose: Rapidly test different GNN architectures on a small subset of data
 
          gnn_iter3: 4 layer gnn + 3 layer mlp, 0.4 dropout
          gnn_iter4: 3 layer gnn + 3 layer mlp, 0.5 dropout
+         gnn_iter5: 3 layer gnn + cross attention + 3 layer mlp, 0.5 dropout
 
 Usage:
     # Test gnn_iter3 (default: 1000 samples, 5 epochs)
