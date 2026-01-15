@@ -18,8 +18,8 @@ unique_proteins = all_proteins.unique()
 from transformers import AutoTokenizer, AutoModel
 import torch
 
-#Medium, heavier weight model alternative: "facebook/esm2_t30_150M_UR50D"
-modelVariation = "facebook/esm2_t12_35M_UR50D"
+# Using heavier 150M model for better performance
+modelVariation = "facebook/esm2_t30_150M_UR50D"
 tokenizer = AutoTokenizer.from_pretrained(modelVariation)
 model = AutoModel.from_pretrained(modelVariation)
 
