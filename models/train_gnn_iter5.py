@@ -133,9 +133,9 @@ def main():
     print(f"Loaded {len(proteinEmbeddings)} protein embeddings")
     print(f"Loaded {len(ligandGraphs)} ligand graphs")
     
-    trainDataset = ProteinLigandDataset('data/splits/train.csv', proteinEmbeddings, ligandGraphs)
-    valDataset = ProteinLigandDataset('data/splits/val.csv', proteinEmbeddings, ligandGraphs)
-    testDataset = ProteinLigandDataset('data/splits/test.csv', proteinEmbeddings, ligandGraphs)
+    trainDataset = ProteinLigandDataset('data/splits_stratified/train.csv', proteinEmbeddings, ligandGraphs)
+    valDataset = ProteinLigandDataset('data/splits_stratified/val.csv', proteinEmbeddings, ligandGraphs)
+    testDataset = ProteinLigandDataset('data/splits_stratified/test.csv', proteinEmbeddings, ligandGraphs)
     
     # Create dataloaders
     batchSize = 64
@@ -148,7 +148,7 @@ def main():
     print(f"\nUsing device: {device}")
     
     model = BindingAffinityGNN(
-        proteinDimension=480,
+        proteinDimension=640,
         ligandGnnOutput=128,
         hiddenDimension=256
     ).to(device)
@@ -189,7 +189,7 @@ def main():
         if valRmse < bestValRmse:
             bestValRmse = valRmse
             patienceCounter = 0
-            torch.save(model.state_dict(), 'results/best_gnn_iter5_model.pt')
+            torch.save(model.state_dict(), 'results/stratified_split/iter5_best_model.pt')
             print(f"✓ Saved best model (Val RMSE: {bestValRmse:.4f})")
         else:
             patienceCounter += 1
@@ -197,12 +197,12 @@ def main():
             if patienceCounter >= patience:
                 print(f"\nEarly stopping after {epoch + 1} epochs")
                 break
-    
+
     # Load best model and evaluate on test set
     print("\n" + "="*70)
     print("Final test evaluation...")
     print("="*70)
-    model.load_state_dict(torch.load('results/best_gnn_iter5_model.pt'))
+    model.load_state_dict(torch.load('results/stratified_split/iter5_best_model.pt'))
     
     testLoss, testRmse, testR2, _, _ = evaluate(model, testLoader, criterion, device)
     
@@ -225,7 +225,7 @@ def main():
         }
     }
     
-    with open('results/gnn_iter5_results.json', 'w') as f:
+    with open('results/stratified_split/iter5_results.json', 'w') as f:
         json.dump(results, f, indent=2)
     
     print("\n" + "="*70)

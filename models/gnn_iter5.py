@@ -25,7 +25,7 @@ class GraphConvolutionLayer(nn.Module):
         return F.relu(aggregated)
 
 class MultiHeadCrossAttention(nn.Module):
-    def __init__(self, proteinDimension=480, ligandDimension=128, numHeads=4):
+    def __init__(self, proteinDimension=640, ligandDimension=128, numHeads=4):
         super(MultiHeadCrossAttention, self).__init__()
         assert ligandDimension % numHeads == 0, ""
         self.numHeads = numHeads
@@ -79,7 +79,7 @@ class GNNEncoder(nn.Module):
     
 class BindingAffinityGNN(nn.Module):
 
-    def __init__(self, proteinDimension=480, ligandGnnOutput=128, hiddenDimension=256):
+    def __init__(self, proteinDimension=640, ligandGnnOutput=128, hiddenDimension=256):
         super(BindingAffinityGNN, self).__init__()
         self.ligandEncoder = GNNEncoder(
             nodeFeaturesDimension=19,

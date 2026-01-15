@@ -69,7 +69,7 @@ class GNNEncoder(nn.Module):
     
 class BindingAffinityGNN(nn.Module):
 
-    def __init__(self, proteinDimension=480, ligandGnnOutput=128, hiddenDimension=256):
+    def __init__(self, proteinDimension=640, ligandGnnOutput=128, hiddenDimension=256):
         super(BindingAffinityGNN, self).__init__()
         self.ligandEncoder = GNNEncoder(
             nodeFeaturesDimension=19,
