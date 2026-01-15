@@ -162,7 +162,7 @@ def main():
 
     print(f"Loaded {len(trainDataset)} train samples, {len(valDataset)} val samples\n")
 
-    batchSize = 256 #Original is 32
+    batchSize = 128 #Original is 32
     trainLoader = DataLoader(trainDataset, batch_size=batchSize, shuffle=True, collate_fn=ProteinLigandDataset.collate)
     valLoader = DataLoader(valDataset, batch_size=batchSize, shuffle=False, collate_fn=ProteinLigandDataset.collate)
 
@@ -173,8 +173,9 @@ def main():
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}\n")
 
     criterion = nn.MSELoss()
-    learningRate = 0.0003 #0.0008
-    optimizer = torch.optim.Adam(model.parameters(), lr=learningRate)
+    learningRate = 0.0006 #0.0008
+    weightDecay = 0.001
+    optimizer = torch.optim.Adam(model.parameters(), lr=learningRate, weight_decay=weightDecay)
 
     # Setup logging
     log_dir = 'results'
@@ -199,6 +200,7 @@ def main():
     print("="*70)
     print(f"Batch size: {batchSize}")
     print(f"Learning rate: {learningRate}")
+    print(f"Weight decay: {weightDecay}")
 
     for epoch in range(args.epochs):
         trainLoss = trainEpoch(model, trainLoader, optimizer, criterion, device)
