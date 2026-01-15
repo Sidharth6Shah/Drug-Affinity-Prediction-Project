@@ -24,22 +24,32 @@ class GraphConvolutionLayer(nn.Module):
             aggregated[dst] += transformed[src] + edgeMessage
         return F.relu(aggregated)
 
-class CrossAttention(nn.Module):
-    def __init__(self, proteinDimension=480, ligandDimension=128):
-        super(CrossAttention, self).__init__()
+class MultiHeadCrossAttention(nn.Module):
+    def __init__(self, proteinDimension=480, ligandDimension=128, numHeads=4):
+        super(MultiHeadCrossAttention, self).__init__()
+        assert ligandDimension % numHeads == 0, ""
+        self.numHeads = numHeads
+        self.headDimension = ligandDimension // numHeads
+        self.scale = self.headDimension ** 0.5
         self.queryProjection = nn.Linear(proteinDimension, ligandDimension)
         self.keyProjection = nn.Linear(ligandDimension, ligandDimension)
         self.valueProjection = nn.Linear(ligandDimension, ligandDimension)
-        self.scale = ligandDimension ** 0.5
+        self.outputProjection = nn.Linear(ligandDimension, ligandDimension)
 
     def forward(self, proteinEmbedding, ligandNodes):
-        query = self.queryProjection(proteinEmbedding).unsqueeze(0)
-        keys = self.keyProjection(ligandNodes)
-        values = self.valueProjection(ligandNodes)
-        scores = torch.matmul(query, keys.transpose(0, 1)) / self.scale
+        N = ligandNodes.size(0)
+        query = self.queryProjection(proteinEmbedding).view(1, self.numHeads, self.headDimension)
+        keys = self.keyProjection(ligandNodes).view(N, self.numHeads, self.headDimension)
+        values = self.valueProjection(ligandNodes).view(N, self.numHeads, self.headDimension)
+        query = query.transpose(0, 1)
+        keys = keys.transpose(0, 1)
+        values = values.transpose(0, 1)
+        scores = torch.matmul(query, keys.transpose(1, 2)) / self.scale
         attentionWeights = F.softmax(scores, dim=-1)
-        attendedLigand = torch.matmul(attentionWeights, values).squeeze(0)
-        return attendedLigand 
+        attended = torch.matmul(attentionWeights, values)
+        attended = attended.transpose(0, 1).contiguous().view(1, -1)
+        output = self.outputProjection(attended).squeeze(0)
+        return output
 
 class GNNEncoder(nn.Module):
 
@@ -77,18 +87,24 @@ class BindingAffinityGNN(nn.Module):
             outputDimension=ligandGnnOutput,
             numLayers=3
         )
-        self.crossAttention = CrossAttention(proteinDimension, ligandGnnOutput)
+        self.crossAttention = MultiHeadCrossAttention(proteinDimension, ligandGnnOutput, numHeads=4)
         combinedDimension = proteinDimension + ligandGnnOutput
         self.mlp = nn.Sequential(
-            nn.Linear(combinedDimension, 256),
+            nn.Linear(combinedDimension, 512),
+            nn.LayerNorm(512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+
+            nn.Linear(512, 256),
             nn.LayerNorm(256),
             nn.ReLU(),
-            nn.Dropout(0.5),
-            
+            nn.Dropout(0.3),
+
+
             nn.Linear(256, 128),
             nn.LayerNorm(128),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             
             nn.Linear(128, 1)
         )

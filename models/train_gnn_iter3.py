@@ -153,7 +153,7 @@ def main():
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
     
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0006, weight_decay=1e-5)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0006, weight_decay=0.00004)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
     
     # Training loop
