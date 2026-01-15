@@ -180,7 +180,7 @@ def main():
     # Setup logging
     log_dir = 'results'
     os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, 'quick_test_results.txt')
+    log_file = os.path.join(log_dir, 'quick_test_logs.txt')
 
     # Write header to log file
     with open(log_file, 'a') as f:

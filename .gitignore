@@ -24,6 +24,6 @@ CLAUDE.md
 # Model checkpoints and results
 results/*.pt
 #results/*.json
-results/quick_test_results.txt
+quick_test_logs.txt
 
 backlog.txt
