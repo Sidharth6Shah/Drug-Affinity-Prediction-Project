@@ -1,5 +1,6 @@
 # Data files
 data/raw/
+data/final_stratified
 data/processed/*.csv
 data/splits/test.csv
 data/splits/train.csv
