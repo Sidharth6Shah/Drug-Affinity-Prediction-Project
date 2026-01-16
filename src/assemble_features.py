@@ -13,9 +13,9 @@ with open('embeddings/ligands/ligand_fingerprints.pkl', 'rb') as f:
     ligandFingerprints = pickle.load(f)
 
 #Load in the data splits to identify which samples to process where
-train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
-val_df = pd.read_csv('data/splits/val.csv', low_memory=False)
-test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
+train_df = pd.read_csv('data/splits_stratified/train.csv', low_memory=False)
+val_df = pd.read_csv('data/splits_stratified/val.csv', low_memory=False)
+test_df = pd.read_csv('data/splits_stratified/test.csv', low_memory=False)
 
 #Concatenate features --> protein embedding + ligand fingerprint
 def assembleFeatures(df, proteinEmbeddings, ligandFingerprints):
@@ -50,10 +50,16 @@ X_val, Y_val = assembleFeatures(val_df, proteinEmbeddings, ligandFingerprints)
 X_test, Y_test = assembleFeatures(test_df, proteinEmbeddings, ligandFingerprints)
 
 from pathlib import Path
-Path('data/final').mkdir(parents=True, exist_ok=True)
-np.save('data/final/X_train.npy', X_train)
-np.save('data/final/Y_train.npy', Y_train)
-np.save('data/final/X_val.npy', X_val)
-np.save('data/final/Y_val.npy', Y_val)
-np.save('data/final/X_test.npy', X_test)
-np.save('data/final/Y_test.npy', Y_test)
+Path('data/final_stratified').mkdir(parents=True, exist_ok=True)
+np.save('data/final_stratified/X_train.npy', X_train)
+np.save('data/final_stratified/Y_train.npy', Y_train)
+np.save('data/final_stratified/X_val.npy', X_val)
+np.save('data/final_stratified/Y_val.npy', Y_val)
+np.save('data/final_stratified/X_test.npy', X_test)
+np.save('data/final_stratified/Y_test.npy', Y_test)
+
+print(f"\nFeature assembly complete!")
+print(f"Train: {X_train.shape[0]} samples, {X_train.shape[1]} features (640 protein + 2048 fingerprint)")
+print(f"Val:   {X_val.shape[0]} samples, {X_val.shape[1]} features")
+print(f"Test:  {X_test.shape[0]} samples, {X_test.shape[1]} features")
+print(f"\nSaved to data/final_stratified/")
