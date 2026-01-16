@@ -5,12 +5,12 @@ from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import pickle
 
-X_train = np.load('data/final/X_train.npy')
-Y_train = np.load('data/final/Y_train.npy')
-X_val = np.load('data/final/X_val.npy')
-Y_val = np.load('data/final/Y_val.npy')
-X_test = np.load('data/final/X_test.npy')
-Y_test = np.load('data/final/Y_test.npy')
+X_train = np.load('data/final_stratified/X_train.npy')
+Y_train = np.load('data/final_stratified/Y_train.npy')
+X_val = np.load('data/final_stratified/X_val.npy')
+Y_val = np.load('data/final_stratified/Y_val.npy')
+X_test = np.load('data/final_stratified/X_test.npy')
+Y_test = np.load('data/final_stratified/Y_test.npy')
 
 #Model setup
 model = XGBRegressor(
@@ -33,6 +33,13 @@ val_r2 = r2_score(Y_val, Y_val_pred)
 
 print(f'Validation RMSE: {val_rmse:.4f}, R2: {val_r2:.4f}')
 
+#Test
+Y_test_pred = model.predict(X_test)
+test_rmse = np.sqrt(mean_squared_error(Y_test, Y_test_pred))
+test_r2 = r2_score(Y_test, Y_test_pred)
+
+print(f'Test RMSE: {test_rmse:.4f}, R2: {test_r2:.4f}')
+
 #Log results to file
 import json
 from datetime import datetime
@@ -50,10 +57,18 @@ results = {
     'validation_metrics': {
         'rmse': float(val_rmse),
         'r2': float(val_r2)
+    },
+    'test_metrics': {
+        'rmse': float(test_rmse),
+        'r2': float(test_r2)
     }
 }
 
-with open('results/baseline_xgboost.json', 'w') as f:
+with open('results/stratified_split/xgboost_results.json', 'w') as f:
     json.dump(results, f, indent=2)
 
-print(f'Results saved to results/baseline_xgboost.json')
+print(f'Results saved to results/stratified_split/xgboost_results.json')
+
+#Save model for ensemble
+pickle.dump(model, open('results/stratified_split/xgboost_model.pkl', 'wb'))
+print(f'Model saved to results/stratified_split/xgboost_model.pkl')
