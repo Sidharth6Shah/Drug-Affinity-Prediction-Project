@@ -71,7 +71,6 @@ MODELS = {
 
 
 def load_results(model_key):
-    """Load results JSON for a model."""
     results_path = RESULTS_DIR / MODELS[model_key]['results_file']
     if not results_path.exists():
         print(f"Warning: Results file not found for {model_key}")
@@ -82,10 +81,6 @@ def load_results(model_key):
 
 
 def load_predictions(model_key):
-    """
-    Load or generate predictions for a model.
-    Returns: (y_true, y_pred) arrays
-    """
     # Load test data
     X_test = np.load(DATA_DIR / 'final/X_test.npy')
     Y_test = np.load(DATA_DIR / 'final/Y_test.npy')
@@ -111,10 +106,8 @@ def load_predictions(model_key):
 
 
 def load_gnn_predictions(model_key, Y_test):
-    """Generate predictions from GNN models."""
     print(f"Generating predictions for {model_key}...")
 
-    # Load the appropriate model architecture
     if model_key == 'gnn':
         from models.gnn import BindingAffinityGNN
     elif model_key == 'gann':
@@ -126,7 +119,6 @@ def load_gnn_predictions(model_key, Y_test):
     elif model_key == 'gnn_iter5':
         from models.gnn_iter5 import BindingAffinityGNN
 
-    # Load model weights
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = BindingAffinityGNN(proteinDimension=480, ligandGnnOutput=128)
     model_path = RESULTS_DIR / MODELS[model_key]['model_file']
@@ -134,14 +126,12 @@ def load_gnn_predictions(model_key, Y_test):
     model.to(device)
     model.eval()
 
-    # Load necessary data
     with open('embeddings/proteins/protein_embeddings.pkl', 'rb') as f:
         protein_embeddings = pickle.load(f)
 
     with open('embeddings/ligands/ligand_graphs.pkl', 'rb') as f:
         ligand_graphs = pickle.load(f)
 
-    # Load test split to get protein-ligand pairs
     test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
 
     predictions = []
@@ -267,7 +257,6 @@ def plot_model_comparison():
 
 
 def plot_predictions_vs_actual(model_key):
-    """Create predicted vs actual scatter plot for a model."""
     y_true, y_pred = load_predictions(model_key)
 
     if y_pred is None:
@@ -281,23 +270,17 @@ def plot_predictions_vs_actual(model_key):
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     r2 = r2_score(y_true, y_pred)
 
-    # Create plot
     fig, ax = plt.subplots(figsize=(8, 8))
-
-    # Scatter plot
     ax.scatter(y_true, y_pred, alpha=0.5, s=20, color=color, edgecolors='black', linewidth=0.5)
 
-    # Perfect prediction line
     min_val = min(y_true.min(), y_pred.min())
     max_val = max(y_true.max(), y_pred.max())
     ax.plot([min_val, max_val], [min_val, max_val], 'r--', linewidth=2, label='Perfect Prediction')
 
-    # Labels and title
     ax.set_xlabel('Actual pKd', fontsize=12, fontweight='bold')
     ax.set_ylabel('Predicted pKd', fontsize=12, fontweight='bold')
     ax.set_title(f'{model_name}: Predicted vs Actual Binding Affinity', fontsize=14, fontweight='bold')
 
-    # Add metrics text box
     textstr = f'RMSE: {rmse:.3f}\nR²: {r2:.3f}'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
     ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=11,
@@ -315,7 +298,6 @@ def plot_predictions_vs_actual(model_key):
 
 
 def plot_residuals(model_key):
-    """Create residual analysis plots for a model."""
     y_true, y_pred = load_predictions(model_key)
 
     if y_pred is None:
@@ -326,8 +308,6 @@ def plot_residuals(model_key):
     color = MODELS[model_key]['color']
 
     residuals = y_true - y_pred
-
-    # Create subplots
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
     # 1. Residuals vs Predicted
@@ -347,8 +327,6 @@ def plot_residuals(model_key):
     ax.set_ylabel('Frequency', fontsize=10, fontweight='bold')
     ax.set_title('Distribution of Residuals', fontsize=11, fontweight='bold')
     ax.grid(alpha=0.3)
-
-    # Add stats
     mean_residual = np.mean(residuals)
     std_residual = np.std(residuals)
     textstr = f'Mean: {mean_residual:.3f}\nStd: {std_residual:.3f}'
@@ -372,10 +350,8 @@ def plot_residuals(model_key):
     ax.set_ylabel('Absolute Residuals', fontsize=10, fontweight='bold')
     ax.set_title('Absolute Error vs Predicted Values', fontsize=11, fontweight='bold')
     ax.grid(alpha=0.3)
-
     plt.suptitle(f'{model_name}: Residual Analysis', fontsize=14, fontweight='bold')
     plt.tight_layout()
-
     output_path = VIZ_DIR / model_key / 'residual_analysis.png'
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
@@ -384,15 +360,12 @@ def plot_residuals(model_key):
 
 
 def plot_data_distribution():
-    """Plot distribution of pKd values across splits."""
     print("Generating data distribution plots...")
 
-    # Load splits
     train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
     val_df = pd.read_csv('data/splits/val.csv', low_memory=False)
     test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
 
-    # Create subplots
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
     # 1. Combined histogram
@@ -427,8 +400,6 @@ def plot_data_distribution():
     ax.set_ylabel('Number of Samples', fontsize=10, fontweight='bold')
     ax.set_title('Dataset Split Sizes', fontsize=11, fontweight='bold')
     ax.grid(axis='y', alpha=0.3)
-
-    # Add value labels
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -438,7 +409,6 @@ def plot_data_distribution():
     # 4. Statistics table
     ax = axes[1, 1]
     ax.axis('off')
-
     stats_data = []
     for name, df in [('Train', train_df), ('Val', val_df), ('Test', test_df)]:
         stats_data.append([
@@ -448,7 +418,6 @@ def plot_data_distribution():
             f"{df['pKd'].min():.3f}",
             f"{df['pKd'].max():.3f}"
         ])
-
     table = ax.table(cellText=stats_data,
                      colLabels=['Split', 'Mean', 'Std', 'Min', 'Max'],
                      cellLoc='center',
@@ -458,12 +427,10 @@ def plot_data_distribution():
     table.set_fontsize(10)
     table.scale(1, 2)
 
-    # Style header
     for i in range(5):
         table[(0, i)].set_facecolor('#34495e')
         table[(0, i)].set_text_props(weight='bold', color='white')
 
-    # Style rows
     for i in range(1, 4):
         for j in range(5):
             table[(i, j)].set_facecolor(['#ecf0f1', '#d5dbdb'][i % 2])
@@ -481,10 +448,8 @@ def plot_data_distribution():
 
 
 def extract_ligand_embeddings(model_key):
-    """Extract learned ligand embeddings from a GNN model for visualization."""
     print(f"  Extracting embeddings for {MODELS[model_key]['name']}...")
 
-    # Load model
     if model_key == 'gnn':
         from models.gnn import BindingAffinityGNN
     elif model_key == 'gann':
@@ -508,7 +473,6 @@ def extract_ligand_embeddings(model_key):
     model.to(device)
     model.eval()
 
-    # Load test data
     test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
     with open('embeddings/ligands/ligand_graphs.pkl', 'rb') as f:
         ligand_graphs = pickle.load(f)
@@ -516,7 +480,6 @@ def extract_ligand_embeddings(model_key):
     embeddings = []
     pkd_values = []
 
-    # Sample subset for visualization (too many points can be cluttered)
     sample_size = min(2000, len(test_df))
     test_sample = test_df.sample(n=sample_size, random_state=42)
 
@@ -525,12 +488,10 @@ def extract_ligand_embeddings(model_key):
             smiles = row['Ligand SMILES']
             graph = ligand_graphs[smiles]
 
-            # Get ligand embedding
             node_features = torch.FloatTensor(graph['nodeFeatures']).to(device)
             edge_features = torch.FloatTensor(graph['edgeFeatures']).to(device)
             edge_index = graph['edgeIndex']
 
-            # Extract embedding from ligand encoder
             embedding = model.ligandEncoder(node_features, edge_index, edge_features)
             embeddings.append(embedding.cpu().numpy())
             pkd_values.append(row['pKd'])
@@ -539,7 +500,6 @@ def extract_ligand_embeddings(model_key):
 
 
 def plot_ligand_embeddings(model_key):
-    """Create t-SNE visualization of learned ligand embeddings."""
     if MODELS[model_key]['type'] != 'gnn':
         return
 
@@ -555,22 +515,17 @@ def plot_ligand_embeddings(model_key):
     tsne = TSNE(n_components=2, random_state=42, perplexity=30, n_iter=1000)
     embeddings_2d = tsne.fit_transform(embeddings)
 
-    # Create plot
     fig, ax = plt.subplots(figsize=(10, 8))
-
     scatter = ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1],
                         c=pkd_values, cmap='viridis', s=20, alpha=0.6,
                         edgecolors='black', linewidth=0.3)
-
     cbar = plt.colorbar(scatter, ax=ax)
     cbar.set_label('pKd (Binding Affinity)', fontsize=11, fontweight='bold')
-
     ax.set_xlabel('t-SNE Dimension 1', fontsize=11, fontweight='bold')
     ax.set_ylabel('t-SNE Dimension 2', fontsize=11, fontweight='bold')
     ax.set_title(f'{model_name}: Learned Ligand Embedding Space\n(colored by binding affinity)',
                 fontsize=13, fontweight='bold')
 
-    # Add explanation text
     explanation = ("Each point represents a drug molecule.\n"
                   "Similar drugs cluster together.\n"
                   "Color indicates binding strength (higher = stronger).")
@@ -587,7 +542,6 @@ def plot_ligand_embeddings(model_key):
 
 
 def main():
-    """Generate all visualizations."""
     print("="*60)
     print("GENERATING VISUALIZATIONS FOR BLOG POST")
     print("="*60)
