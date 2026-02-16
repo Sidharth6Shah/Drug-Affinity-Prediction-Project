@@ -1,7 +1,3 @@
-"""
-Visualization Generation Script - Generates comparison and data distribution plots
-"""
-
 import json
 import numpy as np
 import pandas as pd
@@ -9,15 +5,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
 
-# Set style
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
 
-# Paths
 RESULTS_DIR = Path('results/stratified_split')
 VIZ_DIR = Path('results/visualizations')
 
-# Model configurations
 MODELS = {
     'xgboost': {
         'name': 'XGBoost',
@@ -53,10 +46,8 @@ MODELS = {
 
 
 def load_results(model_key):
-    """Load test results from JSON file."""
     results_path = RESULTS_DIR / MODELS[model_key]['results_file']
     if not results_path.exists():
-        print(f"Warning: Results file not found for {model_key}")
         return None
 
     with open(results_path, 'r') as f:
@@ -64,9 +55,6 @@ def load_results(model_key):
 
 
 def plot_model_comparison():
-    """Create bar charts comparing all models."""
-    print("Generating model comparison plots...")
-
     models_data = []
     for key in MODELS.keys():
         results = load_results(key)
@@ -79,12 +67,10 @@ def plot_model_comparison():
             })
 
     if not models_data:
-        print("No model data available for comparison")
         return
 
     df = pd.DataFrame(models_data)
 
-    # RMSE comparison
     fig, ax = plt.subplots(figsize=(10, 6))
     bars = ax.bar(df['name'], df['rmse'], color=df['color'], alpha=0.8, edgecolor='black')
     ax.set_ylabel('RMSE', fontsize=12, fontweight='bold')
@@ -93,7 +79,6 @@ def plot_model_comparison():
     ax.grid(axis='y', alpha=0.3)
     plt.xticks(rotation=45, ha='right')
 
-    # Add value labels on bars
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -104,7 +89,6 @@ def plot_model_comparison():
     plt.savefig(VIZ_DIR / 'comparisons/rmse_comparison.png', dpi=300, bbox_inches='tight')
     plt.close()
 
-    # R² comparison
     fig, ax = plt.subplots(figsize=(10, 6))
     bars = ax.bar(df['name'], df['r2'], color=df['color'], alpha=0.8, edgecolor='black')
     ax.set_ylabel('R² Score', fontsize=12, fontweight='bold')
@@ -114,7 +98,6 @@ def plot_model_comparison():
     ax.set_ylim([0, max(df['r2']) * 1.2])
     plt.xticks(rotation=45, ha='right')
 
-    # Add value labels on bars
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -125,10 +108,8 @@ def plot_model_comparison():
     plt.savefig(VIZ_DIR / 'comparisons/r2_comparison.png', dpi=300, bbox_inches='tight')
     plt.close()
 
-    # Combined comparison
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
-    # RMSE
     bars1 = ax1.bar(df['name'], df['rmse'], color=df['color'], alpha=0.8, edgecolor='black')
     ax1.set_ylabel('RMSE', fontsize=12, fontweight='bold')
     ax1.set_xlabel('Model', fontsize=12, fontweight='bold')
@@ -140,7 +121,6 @@ def plot_model_comparison():
         ax1.text(bar.get_x() + bar.get_width()/2., height,
                 f'{height:.3f}', ha='center', va='bottom', fontsize=9)
 
-    # R²
     bars2 = ax2.bar(df['name'], df['r2'], color=df['color'], alpha=0.8, edgecolor='black')
     ax2.set_ylabel('R² Score', fontsize=12, fontweight='bold')
     ax2.set_xlabel('Model', fontsize=12, fontweight='bold')
@@ -158,25 +138,18 @@ def plot_model_comparison():
     plt.savefig(VIZ_DIR / 'comparisons/combined_comparison.png', dpi=300, bbox_inches='tight')
     plt.close()
 
-    print(f"  ✓ Saved comparison plots to {VIZ_DIR / 'comparisons'}")
-
 
 def plot_data_distribution():
-    """Create data distribution analysis plots."""
-    print("Generating data distribution plots...")
-
     train_df = pd.read_csv('data/splits/train.csv', low_memory=False)
     val_df = pd.read_csv('data/splits/val.csv', low_memory=False)
     test_df = pd.read_csv('data/splits/test.csv', low_memory=False)
 
-    # Remove any infinite or NaN values
     train_df = train_df[np.isfinite(train_df['pKd'])]
     val_df = val_df[np.isfinite(val_df['pKd'])]
     test_df = test_df[np.isfinite(test_df['pKd'])]
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 
-    # 1. Combined histogram
     ax = axes[0, 0]
     ax.hist(train_df['pKd'], bins=50, alpha=0.6, label='Train', color='#3498db', edgecolor='black')
     ax.hist(val_df['pKd'], bins=50, alpha=0.6, label='Validation', color='#e74c3c', edgecolor='black')
@@ -187,7 +160,6 @@ def plot_data_distribution():
     ax.legend()
     ax.grid(alpha=0.3)
 
-    # 2. Box plot
     ax = axes[0, 1]
     data_to_plot = [train_df['pKd'], val_df['pKd'], test_df['pKd']]
     bp = ax.boxplot(data_to_plot, labels=['Train', 'Validation', 'Test'],
@@ -200,7 +172,6 @@ def plot_data_distribution():
     ax.set_title('pKd Distribution Box Plot', fontsize=11, fontweight='bold')
     ax.grid(alpha=0.3)
 
-    # 3. Split sizes
     ax = axes[1, 0]
     splits = ['Train', 'Validation', 'Test']
     sizes = [len(train_df), len(val_df), len(test_df)]
@@ -214,7 +185,6 @@ def plot_data_distribution():
                 f'{int(height):,}',
                 ha='center', va='bottom', fontweight='bold')
 
-    # 4. Statistics table
     ax = axes[1, 1]
     ax.axis('off')
     stats_data = []
@@ -252,30 +222,10 @@ def plot_data_distribution():
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
 
-    print(f"  ✓ Saved data distribution plots")
-
 
 def main():
-    print("="*60)
-    print("GENERATING VISUALIZATIONS FOR BLOG POST")
-    print("="*60)
-
-    # 1. Model comparison
-    print("\n[1/2] Creating model comparison plots...")
     plot_model_comparison()
-
-    # 2. Data distribution
-    print("\n[2/2] Creating data distribution plots...")
     plot_data_distribution()
-
-    print("\n" + "="*60)
-    print("✓ ALL VISUALIZATIONS COMPLETE!")
-    print("="*60)
-    print(f"\nOutputs saved to: {VIZ_DIR}")
-    print(f"\nGenerated 4 visualization files:")
-    print("  - Model comparisons: results/visualizations/comparisons/ (3 files)")
-    print("  - Data distribution: results/visualizations/data_analysis/ (1 file)")
-    print("\nReady for your blog post!")
 
 
 if __name__ == '__main__':
