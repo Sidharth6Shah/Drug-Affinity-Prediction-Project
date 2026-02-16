@@ -28,3 +28,6 @@ results/*.pt
 quick_test_logs.txt
 
 backlog.txt
+
+posts/blog_post.md
+posts/linkedin_post.md
