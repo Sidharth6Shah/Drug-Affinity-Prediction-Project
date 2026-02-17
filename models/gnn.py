@@ -81,10 +81,6 @@ if __name__ == '__main__':
     import pickle
     import pandas as pd
 
-    print("="*50)
-    print("TESTING COMPLETE BINDING AFFINITY MODEL")
-    print("="*50)
-
     # Load ligand graphs
     with open('embeddings/ligands/ligand_graphs.pkl', 'rb') as f:
         ligandGraphs = pickle.load(f)
@@ -106,12 +102,6 @@ if __name__ == '__main__':
     graph = ligandGraphs[smiles]
     proteinEmb = proteinEmbeddings[proteinSeq]
 
-    print(f"\nTest ligand SMILES: {smiles}")
-    print(f"Ligand - Nodes: {graph['numNodes']}, Edges: {len(graph['edgeIndex'])}")
-    print(f"Protein sequence length: {len(proteinSeq)} amino acids")
-    print(f"Protein embedding shape: {proteinEmb.shape}")
-    print(f"Actual pKd: {actualPKd:.4f}")
-
     # Create complete model
     model = BindingAffinityGNN(proteinDimension=480, ligandGnnOutput=128, hiddenDimension=256)
 
@@ -123,12 +113,3 @@ if __name__ == '__main__':
 
     # Forward pass
     prediction = model(proteinTensor, nodeFeatures, edgeIndex, edgeFeatures)
-
-    print(f"\n" + "="*50)
-    print(f"Actual pKd:    {actualPKd:.4f}")
-    print(f"Predicted pKd: {prediction.item():.4f}")
-    print(f"Difference:    {abs(actualPKd - prediction.item()):.4f}")
-    print(f"\nOutput shape: {prediction.shape}")
-    print(f"Expected shape: torch.Size([1])")
-    print(f"\nSuccess! ✓" if prediction.shape[0] == 1 else "Failed ✗")
-    print("="*50)

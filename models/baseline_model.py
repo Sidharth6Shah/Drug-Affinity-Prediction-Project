@@ -31,14 +31,10 @@ Y_val_pred = model.predict(X_val)
 val_rmse = np.sqrt(mean_squared_error(Y_val, Y_val_pred))
 val_r2 = r2_score(Y_val, Y_val_pred)
 
-print(f'Validation RMSE: {val_rmse:.4f}, R2: {val_r2:.4f}')
-
 #Test
 Y_test_pred = model.predict(X_test)
 test_rmse = np.sqrt(mean_squared_error(Y_test, Y_test_pred))
 test_r2 = r2_score(Y_test, Y_test_pred)
-
-print(f'Test RMSE: {test_rmse:.4f}, R2: {test_r2:.4f}')
 
 #Log results to file
 import json
@@ -67,8 +63,5 @@ results = {
 with open('results/stratified_split/xgboost_results.json', 'w') as f:
     json.dump(results, f, indent=2)
 
-print(f'Results saved to results/stratified_split/xgboost_results.json')
-
 #Save model for ensemble
 pickle.dump(model, open('results/stratified_split/xgboost_model.pkl', 'wb'))
-print(f'Model saved to results/stratified_split/xgboost_model.pkl')

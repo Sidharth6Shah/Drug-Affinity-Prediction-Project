@@ -24,7 +24,6 @@ class ProteinLigandDataset(Dataset):
                 if pd.notna(row['pKd']) and not np.isinf(row['pKd']):
                     validIndices.append(index)
         self.df = self.df.loc[validIndices].reset_index(drop=True)
-        print(f"Loaded {len(self.df)} valid samples from {splitCsv}")
 
     def __len__(self):
         return len(self.df)
@@ -127,9 +126,6 @@ def main():
     with open('embeddings/ligands/ligand_graphs.pkl', 'rb') as f:
         ligandGraphs = pickle.load(f)
     
-    print(f"Loaded {len(proteinEmbeddings)} protein embeddings")
-    print(f"Loaded {len(ligandGraphs)} ligand graphs")
-    
     trainDataset = ProteinLigandDataset('data/splits_stratified/train.csv', proteinEmbeddings, ligandGraphs)
     valDataset = ProteinLigandDataset('data/splits_stratified/val.csv', proteinEmbeddings, ligandGraphs)
     testDataset = ProteinLigandDataset('data/splits_stratified/test.csv', proteinEmbeddings, ligandGraphs)
@@ -142,15 +138,12 @@ def main():
     
     # Setup model
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"\nUsing device: {device}")
     
     model = BindingAffinityGNN(
         proteinDimension=640,
         ligandGnnOutput=128,
         hiddenDimension=512
     ).to(device)
-    
-    print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
     
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
@@ -161,23 +154,14 @@ def main():
     bestValRmse = float('inf')
     patience = 10
     patienceCounter = 0
-    
-    print("\n" + "="*70)
-    print("Starting training...")
-    print("="*70)
-    
+        
     for epoch in range(numEpochs):
-        print(f"\nEpoch {epoch + 1}/{numEpochs}")
-        print("-" * 70)
         
         # Train
         trainLoss = trainEpoch(model, trainLoader, optimizer, criterion, device)
         
         # Validate
         valLoss, valRmse, valR2, _, _ = evaluate(model, valLoader, criterion, device)
-        
-        print(f"\nTrain Loss: {trainLoss:.4f}")
-        print(f"Val Loss: {valLoss:.4f} | Val RMSE: {valRmse:.4f} | Val R²: {valR2:.4f}")
         
         # Learning rate scheduling
         scheduler.step(valLoss)
@@ -187,24 +171,15 @@ def main():
             bestValRmse = valRmse
             patienceCounter = 0
             torch.save(model.state_dict(), 'results/stratified_split/gann_best_model.pt')
-            print(f"✓ Saved best model (Val RMSE: {bestValRmse:.4f})")
         else:
             patienceCounter += 1
-            print(f"No improvement ({patienceCounter}/{patience})")
             if patienceCounter >= patience:
-                print(f"\nEarly stopping after {epoch + 1} epochs")
                 break
 
     # Load best model and evaluate on test set
-    print("\n" + "="*70)
-    print("Final test evaluation...")
-    print("="*70)
     model.load_state_dict(torch.load('results/stratified_split/gann_best_model.pt'))
     
     testLoss, testRmse, testR2, _, _ = evaluate(model, testLoader, criterion, device)
-    
-    print(f"\nTest RMSE: {testRmse:.4f}")
-    print(f"Test R²: {testR2:.4f}")
     
     # Save results
     results = {
@@ -217,10 +192,6 @@ def main():
     
     with open('results/stratified_split/gann_results.json', 'w') as f:
         json.dump(results, f, indent=2)
-    
-    print("\n" + "="*70)
-    print("Training complete!")
-    print("="*70)
 
 
 if __name__ == '__main__':

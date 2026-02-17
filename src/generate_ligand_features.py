@@ -1,8 +1,5 @@
 #Phase 4: Ligand Featurization
 
-# Step 1: Load data and get unique ligands
-#   Load training data and extract unique SMILES strings
-
 import pandas as pd
 import numpy as np
 
@@ -18,12 +15,6 @@ all_smiles = pd.concat([
     test_df['Ligand SMILES']
 ])
 uniqueSmiles = all_smiles.unique()
-
-
-# Step 2: Generate Morgan (ECFP) fingerprints
-#1. convert SMILES to molecular object
-#2. generate fingerprint
-#3. convert to numpy array
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -46,12 +37,6 @@ def getMFP(smiles, radius = 2, n_bits=2048):
        
     return arr
 
-# Step 3 (HOLDING): Add molecular descriptors
-
-
-
-# Step 4: Caching
-
 from pathlib import Path
 from tqdm import tqdm
 import pickle
@@ -67,4 +52,4 @@ for smiles in tqdm(uniqueSmiles, desc="Generating ligand fingerprints"):
 with open(embeddingsDir / "ligand_fingerprints.pkl", "wb") as f:
     pickle.dump(ligandFingerprints, f)
 
-print(f"\nSaved {len(ligandFingerprints)} ligand fingerprints to {embeddingsDir / 'ligand_fingerprints.pkl'}")
+# print(f"\nSaved {len(ligandFingerprints)} ligand fingerprints to {embeddingsDir / 'ligand_fingerprints.pkl'}")
